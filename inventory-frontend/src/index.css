@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+.header{
+    @apply bg-purple-600 text-gray-100 font-bold text-4xl py-14 text-center;
+}
+.sidebar{
+    @apply bg-gray-400 shadow-2xl;
+    height: 100vh;
+}
+.menu-item{
+    @apply border-b border-gray-300
+}
+.items{
+    @apply hover:bg-slate-300 py-2
+}
+.table-item{
+    @apply border border-gray-300 m-auto grid px-5;
+    transition-duration: .3s;
+}
+.item-item{
+    @apply table-item grid-cols-4;
+    width: 80%;
+}
+.restock-item{
+    @apply table-item grid-cols-5;
+    width: 90%;
+}
+
+.col1{
+    @apply text-end w-32
+}
+.item-btn{
+    @apply w-fit px-4 py-2 text-gray-100 rounded-md font-semibold hover:shadow-md;
+}
+.report-details-btn{
+    @apply font-semibold text-gray-300 ml-2 border-b-2 border-gray-600 hover:border-gray-100 hover:text-white;
+    transition-duration: .3s;
+}
+.report-sidebar{
+    @apply bg-gray-700;
+    overflow-y: scroll;
+    height: 91vh;
+}
+.report-line{
+    @apply  px-5 py-3 grid grid-cols-4;
+    width: 100% !important;
+}
+.header-line{
+    @apply bg-purple-500
+}
+.add-item-form{
+    @apply rounded-2xl shadow-xl mx-auto;
+    width: 70%;
+}
+.form-p{
+    @apply grid grid-cols-2 px-20 m-2
+}
+.form-input{
+    @apply outline-none border-2 border-gray-700 rounded-lg px-5 py-1;
+}
