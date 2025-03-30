@@ -32,8 +32,8 @@ export const Withdrawals = () => {
     }
     
     useEffect(()=>
-        setWithdrawals(searchParams.get("name")? rawRestocks.filter(item=>item.itemName.toLowerCase()===searchParams.get("name").toLowerCase()):rawRestocks)
-    ,[rawRestocks,searchParams])
+        setWithdrawals(searchParams.get("name")? rawWithdrawals.filter(item=>item.itemName.toLowerCase().includes(searchParams.get("name").toLowerCase())):rawWithdrawals)
+    ,[rawWithdrawals,searchParams])
 
     const queryClient = useQueryClient();
 

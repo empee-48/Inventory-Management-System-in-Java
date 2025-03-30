@@ -26,7 +26,7 @@ export const Items = () => {
   }
 
   useEffect(()=>{
-    setItems(searchParams.get("name")?rawItems.filter(item=>item.name.toLowerCase()==searchParams.get("name").toLowerCase()):rawItems)
+    setItems(searchParams.get("name")?rawItems.filter(item=>item.name.toLowerCase().includes(searchParams.get("name").toLowerCase())):rawItems)
   },[searchParams,rawItems || null])
   
 

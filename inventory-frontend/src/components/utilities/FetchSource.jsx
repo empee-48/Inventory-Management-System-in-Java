@@ -1,4 +1,4 @@
 
 export const FetchSource = () => {
-  return {source:"http://localhost:8080/inventory/api"}
+  return {source:"http://192.168.2.249:8081/inventory/api"}
 }
