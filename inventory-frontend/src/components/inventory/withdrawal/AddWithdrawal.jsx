@@ -1,17 +1,31 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { FetchSource } from '../utilities/FetchSource';
+import { useQuery } from '@tanstack/react-query';
+import { FetchSource } from '../../utilities/FetchSource';
 import Select from 'react-select';
-import { ItemsOptions } from '../utilities/ItemsOptions';
 
-export const AddRestock = () => {
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+export const AddWithdrawal = () => {
+  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
   const url = FetchSource().source;
-  const options = ItemsOptions().options
+
+  const { data: items } = useQuery({
+    queryFn: () => fetch(`${url}/items`).then(res => res.json())
+      .then(data => options(data)),
+    queryKey: ["items"],
+  });
+
+  const options = (items) => {
+    return items.map(item => (
+      {
+        "label": item.name,
+        "value": item.id
+      }
+    ));
+  }
 
   const onSubmit = async (data) => {
     try {
-      const response = await fetch(`${url}/restocks`, {
+      const response = await fetch(`${url}/withdrawals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,6 +39,7 @@ export const AddRestock = () => {
 
       // Handle success (e.g., show a message or reset the form)
       alert('Item added successfully!');
+      reset(); // Reset the form after successful submission
     } catch (error) {
       // Handle error (e.g., show an error message)
       alert(`Error: ${error.message}`);
@@ -37,14 +52,11 @@ export const AddRestock = () => {
       <form className='grid' onSubmit={handleSubmit(onSubmit)}>
         <p className='form-p'>
           <label htmlFor="item">Item </label>
-
-          {/*<select className="p-2" name="item" id="item" {...register('itemId', { required: true })}>
-            {items?.map(item=>(
-              <option value={item.id} key={item.id} className='capitalize p-2'>{item.name}</option>
-            ))}
-          </select>*/}
-          <Select options={options} onChange={(selectedOption)=>setValue('itemId', selectedOption.value)}/>
-          {errors.serial && <span className='text-red-500'>This field is required</span>}
+          <Select 
+            options={items} 
+            onChange={(selectedOption) => setValue('itemId', selectedOption.value)} 
+          />
+          {errors.itemId && <span className='text-red-500'>This field is required</span>}
         </p>
         <p className='form-p'>
           <label htmlFor="instock">Amount </label>
@@ -53,7 +65,7 @@ export const AddRestock = () => {
             {...register('amount', { required: true, min: 0 })} 
             className='form-input' 
           />
-          {errors.instock && <span className='text-red-500'>This field  must be at least 0</span>}
+          {errors.amount && <span className='text-red-500'>This field must be at least 0</span>}
         </p>
         <p className="m-2 grid justify-end px-20">
           <input type="submit" value="Add Item" className='bg-cyan-500 px-5 py-2 rounded-lg text-gray-100 cursor-pointer' />

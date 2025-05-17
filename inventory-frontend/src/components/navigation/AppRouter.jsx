@@ -1,18 +1,19 @@
 import React from 'react'
 import { MySideBar } from './MySideBar'
-import { ItemsPage } from '../items/ItemsPage'
-import { createBrowserRouter,RouterProvider } from 'react-router-dom'
-import { RestockPage } from '../restock/RestockPage'
+import { ItemsPage } from '../inventory/items/ItemsPage'
+import { createBrowserRouter,RouterProvider, Outlet } from 'react-router-dom'
+import { RestockPage } from '../inventory/restock/RestockPage'
 import { DashboardPage } from '../dashboard/DashboardPage'
-import { WithdrawalsPage } from '../withdrawal/WithdrawalsPage'
-import { ReportsPage } from '../report/ReportsPage'
-
-const Layout=({children})=>{
+import { WithdrawalsPage } from '../inventory/withdrawal/WithdrawalsPage'
+import { ReportsPage } from '../inventory/report/ReportsPage'
+import { Permits } from '../permits/Permits'
+import { PermitsNav } from '../permits/PermitsNav'
+const Layout=()=>{
   return (
   <div className='flex'>
           <MySideBar />
           <div className='w-full'>
-            {children}
+            <Outlet />
           </div>
     </div>
   )
@@ -22,25 +23,43 @@ const router=createBrowserRouter([
   
   {
     path:"/",
-    element: <Layout><DashboardPage /></Layout>
-  },
-  {
-    path:"/items",
-    element: <Layout><ItemsPage /></Layout>
-  },
-  {
-    path:"/restocks",
-    element: <Layout> <RestockPage /> </Layout>
-  },
-  {
-    path:"/withdrawals",
-    element: <Layout> <WithdrawalsPage /> </Layout>
-  },
-  {
-    path:"/reports",
-    element: <Layout> <ReportsPage /> </Layout>
-  }
+    element: <Layout />,
+    children: [
+      {
+        path: "",
+        element: <DashboardPage />
+      },
+      {
+        path:"/items",
+        element: <ItemsPage />
+      },
+      {
+        path:"/restocks",
+        element: <RestockPage />
+      },
+      {
+        path:"/withdrawals",
+        element: <WithdrawalsPage />
+      },
+      {
+        path:"/reports",
+        element: <ReportsPage />
+      },
+      {
+        path: "/permits",
+        element: <PermitsNav />,
+        children: [
+          {
+            path: "/permits",
+            element: <Permits />
+          },
+          {
 
+          }
+        ]
+      }
+    ]
+  }
 ])
 
 export const AppRouter = () => {

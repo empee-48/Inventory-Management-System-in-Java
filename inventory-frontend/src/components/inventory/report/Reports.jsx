@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import moment from 'moment'
 import { useQuery } from '@tanstack/react-query'
 import { ReportItem } from './ReportItem'
-import { FetchSource } from '../utilities/FetchSource'
+import { FetchSource } from '../../utilities/FetchSource'
 
 export const Reports = () => {
   const url=FetchSource().source;
@@ -52,7 +52,7 @@ export const Reports = () => {
   return (
     <div className='flex'>
       <div className='w-fit report-sidebar min-w-72'>
-        <h1 className='p-4 bg-purple-900 text-gray-100 font-bold text-2xl'>Reports</h1>
+        <h1 className='p-4 bg-purple-800 text-gray-100 font-bold text-2xl'>Reports</h1>
         {reports?.map(item=>(
             <div key={item.id} className='bg-gray-600 px-6 text-gray-100 py-1 border-b-2 border-gray-300'>
                 <span className='col'>{item.reportType}</span>

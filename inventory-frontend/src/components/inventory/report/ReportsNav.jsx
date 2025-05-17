@@ -1,7 +1,7 @@
 import React from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { FetchSource } from '../utilities/FetchSource';
+import { FetchSource } from '../../utilities/FetchSource';
 
 export const ReportsNav = () => {
     const navigate = useNavigate(); // Get the navigate function

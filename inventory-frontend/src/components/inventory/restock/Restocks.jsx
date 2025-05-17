@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import moment from 'moment'
-import { FetchSource } from '../utilities/FetchSource';
+import { FetchSource } from '../../utilities/FetchSource';
 import Select from 'react-select';
-import { ItemsOptions } from '../utilities/ItemsOptions';
+import { ItemsOptions } from '../../utilities/ItemsOptions';
 import { useSearchParams } from 'react-router-dom';
 
 export const Restocks = () => {
@@ -68,14 +68,14 @@ export const Restocks = () => {
     }
   return (
     <div>
-        <form className="mx-auto mb-2 flex justify-center" style={{width:"90%"}}>
+        <form className="mx-auto mb-2 flex justify-center" style={{width:"70%"}}>
             <p className='inline-block' style={{width:"50%"}}> <Select options={options} onChange={selectedOption=>addSearchParams(selectedOption.label)}/> </p>
         </form>
-        <div className="restock-item my-10 py-3 rounded-t-md text-gray-100 font-semibold bg-purple-500">
+        <div className="restock-item py-3 rounded-t-md text-gray-100 font-semibold bg-purple-800">
             <span className="col">Item Name</span>
             <span className="col">Date</span>
             <span className="col col1">Amount Added</span>
-            <span className="col col1">User</span>
+            {/* <span className="col col1">User</span> */}
             <span className='col'>Action</span>
         </div>
         {restocks?.map(item=>(
@@ -83,7 +83,7 @@ export const Restocks = () => {
                 <span className="col ">{item.itemName}</span>
                 <span className="col">{moment(item.createdAt).format('D MMM, YYYY HH:mm')}</span>
                 <span className="col col1">{item.amount} {item.unit}</span>
-                <span className="col col1">{item.createdBy}</span>
+                {/* <span className="col col1">{item.createdBy}</span> */}
                 <span className='col'>
                 <button 
                     className='bg-red-500 item-btn hover:bg-red-600' 

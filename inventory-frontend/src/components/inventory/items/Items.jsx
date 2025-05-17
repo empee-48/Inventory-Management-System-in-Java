@@ -1,6 +1,6 @@
 import React,{ useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FetchSource } from '../utilities/FetchSource';
+import { FetchSource } from '../../utilities/FetchSource';
 import { useSearchParams } from 'react-router-dom';
 
 export const Items = () => {
@@ -67,7 +67,7 @@ export const Items = () => {
         <input onChange={(e)=>setSearch(e.target.value)} type="text" name="name" id="name" placeholder='search for item' className='bg-gray-200 border outline-none border-gray-400 rounded px-5 py-2 w-full' style={{width:"85%",transitionDuration:".3s"}} />
         <input className='py-2 px-5 font-semibold text-gray-200 rounded bg-gray-700 ml-2' type='submit' value={"search"}/>
       </form>
-      <div className="item-item my-10 py-3 rounded-t-md text-gray-100 font-semibold bg-purple-500">
+      <div className="item-item mt-10 py-3 rounded-t-md text-gray-100 font-semibold bg-purple-800">
         <span className="col">Serial Number</span>
         <span className="col">Item Name</span>
         <span className="col col1">Instock</span>

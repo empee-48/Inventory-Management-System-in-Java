@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.tr{
+    @apply grid grid-cols-6 2xl:grid-cols-7 min-w-72 w-full border px-2
+}
+.tr span{
+    @apply py-5 px-1 text-right
+}
+.head{
+    @apply bg-purple-700 text-gray-200 font-medium rounded-t-lg
+}
+.body{
+    @apply text-gray-800 
+}
+.extra-pad{
+    padding-inline: 10px !important;
+}
+.align-start{
+    text-align: start !important;
+    padding-inline-start: 8px !important;
+}
+
+.modal-container{
+    height: 100vh;
+    position: absolute;
+    top: 0%;
+    width: calc(100vw - 250px);
+    background-color: rgba(0, 0, 0, 0.516);
+}
+
+.form-p{
+    @apply m-3
+}
+.modal-hidden{
+    @apply h-0 w-0 overflow-hidden
+}
+.modal-p{
+    @apply text-gray-800 font-medium flex justify-between py-1
+}
+.form-input{
+    @apply p-1 bg-gray-600 border-2 border-gray-400;
+}
+.form-p{
+    @apply text-gray-300
+}
+/* .modal-container .modal{
+   animation: showModal 1s forwards ease-in-out;
+}
+
+@keyframes showModal {
+    0%,90%{
+        opacity: 0;
+    }
+    100%{
+        opacity: 1;
+    }
+} */
+
+.background-gradient {
+    background: linear-gradient(to right, #800087, #6100c2); /* Red to Yellow to Green */
+}
+.page-btn{
+    @apply hover:bg-cyan-600 hover:text-gray-50 text-cyan-600 border-2 border-cyan-600 duration-200 h-8 w-8 rounded-full flex justify-center place-items-center;
+}
