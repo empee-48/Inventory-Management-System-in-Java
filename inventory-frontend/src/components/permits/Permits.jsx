@@ -112,7 +112,6 @@ export const Permits = () => {
         </div>
         <div className='car-table shadow-2xl shadow-gray-400'>
           <div className='head tr'>
-            <span className='align-start'>Index</span>
             <span className='w-40'>Registration Number</span>
             {/* <span className='hidden 2xl:block'>Depot</span> */}
             <span>Passenger Insurance</span>
@@ -123,9 +122,8 @@ export const Permits = () => {
           </div>
           <div className='body'>
             {buses?.map((bus, index) => (
-              <div key={bus.id} onClick={() => handleShowBus(bus.regNumber)} className={classNames(index % 2 === 0 ? "bg-purple-50 tr" : "bg-gray-200 tr", "cursor-pointer duration-100 hover:bg-green-100")}>
-                <span className='align-start'>{index+1}</span>
-                <span className='align-start w-40'>{bus.regNumber}</span>
+              <div key={bus.id} onClick={() => handleShowBus(bus.regNumber)} className={classNames(index % 2 === 0 ? "bg-purple-50 tr" : "bg-gray-200 tr", "cursor-pointer duration-100 hover:bg-gray-300")}>
+                <span className='align-start w-40'> <span>{index+1}.</span> {bus.regNumber}</span>
                 {/* <span className='hidden 2xl:block capitalize'>{bus.depot}</span> */}
                 <span>{moment(bus.passengerInsurance).format("DD MMMM YYYY")}</span>
                 <span>{moment(bus.vehicleLicence).format("DD MMMM YYYY")}</span>
@@ -134,7 +132,7 @@ export const Permits = () => {
                 <span className='extra-pad'>{moment(bus.routeAuthority).format("DD MMMM YYYY")}</span>
               </div>
             ))}
-            <div className='bg-gray-200 w-full rounded-b px-7 p-3 flex justify-center'>
+            <div className='bg-gray-200 w-full rounded-b px-7 p-3  border-t-2 border-gray-300 flex justify-center'>
               <div className='text-gray-50 flex gap-7'>
                 {/* <button className='page-btn'>first</button> */}
                 <button className='page-btn'><LuChevronsLeft fontSize={20}/></button>

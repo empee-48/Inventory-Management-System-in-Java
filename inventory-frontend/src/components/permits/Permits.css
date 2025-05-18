@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+body{
+    overflow-x: hidden ;
+}
 .tr{
     @apply grid grid-cols-6 2xl:grid-cols-7 min-w-72 w-full border px-2
 }
@@ -27,6 +30,7 @@
     position: absolute;
     top: 0%;
     width: calc(100vw - 250px);
+    overflow-y: hidden;
     background-color: rgba(0, 0, 0, 0.516);
 }
 
