@@ -7,20 +7,32 @@
     padding: 0;
     box-sizing: border-box;
 }
+body{
+    height: 100%;
+}
 .header{
-    @apply bg-green-600  my-5 mx-1 text-gray-300 uppercase font-bold text-3xl pt-6 py-7 text-center rounded-3xl border-yellow-500;
+    @apply bg-emerald-700  my-5 mx-1 text-gray-300 uppercase font-bold text-3xl pt-6 py-7 text-center rounded-3xl border-yellow-600;
     border-inline-width: 2px;
     border-block-width: 10px;
 }
 
 .sidebar{
     @apply  shadow-2xl;
-    height: 100vh;
+    height: 100%;
+    position: fixed !important;
+    top: 0;
+    overflow: hidden !important;
+    width: 250px !important;
     background-color: #000000
+}
+.unside-bar{
+    width: calc(100% - 250px) !important;
+    margin-left: 250px;
 }
 .sub-menu{
     @apply border-t border-gray-500 font-medium bg-gray-800 text-gray-100
 }
+
 .ps-menu-button:hover {
     transition-duration: 300ms !important;
     background-color: #101828 !important;

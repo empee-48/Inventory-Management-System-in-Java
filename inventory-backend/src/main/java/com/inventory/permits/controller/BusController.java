@@ -1,51 +1,46 @@
 package com.inventory.permits.controller;
 
 import com.inventory.permits.entity.Bus;
-import com.inventory.permits.entity.Permits;
+import com.inventory.permits.service.dto.DriverDocResponse;
+import com.inventory.permits.service.dto.Permits;
 import com.inventory.permits.service.BusService;
 import com.inventory.permits.service.dto.BusCreateDto;
 import com.inventory.permits.service.dto.BusResponseDto;
+import com.inventory.utils.PermitStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @CrossOrigin
 @RestController
-@RequestMapping("/permits/api/buses")
+@RequestMapping("/inventory/api/buses")
 @RequiredArgsConstructor
 public class BusController {
     private final BusService service;
 
     @GetMapping
-    public List<BusResponseDto> getAll(
-            @RequestParam(required = false) String depot
-    ){
-        List<BusResponseDto> buses = service.getBusesWithExpired();
-        if(depot != null && !depot.isEmpty()) buses = buses.stream().filter(bus -> bus.depot().equalsIgnoreCase(depot)).toList();
-        return buses;
-    }
-
-    @GetMapping("/bus")
-    public BusResponseDto getAll(
-            @RequestParam(required = false) String regNumber,
+    public ResponseEntity<?> getAll(
+            @RequestParam(defaultValue = "") String depot,
+            @RequestParam(defaultValue = "") String regNumber,
             @RequestParam(required = false) Long id
     ){
-        try {
-            if (regNumber != null && !regNumber.isEmpty()) {
-                return service.getBusByRegNumberWithExpired(regNumber);
-            }
-            if (id != null) {
-                return service.getBusWithExpired(id);
-            }
+        if(id != null){
+            return ResponseEntity.of(service.getBusById(id));
         }
-        catch (IllegalAccessException e){
-            e.printStackTrace();
+        if(!regNumber.isEmpty()) {
+            return ResponseEntity.of(service.getBusResponseByRegNumber(regNumber));
         }
-        return null;
+        if(!depot.isEmpty()) {
+            service.getBusesResponse().stream().filter(bus -> bus.depot().equalsIgnoreCase(depot)).toList();
+        };
+        return ResponseEntity.ok(service.getBusesResponse());
     }
 
     @GetMapping("/page")
@@ -55,23 +50,32 @@ public class BusController {
         return service.getBusesPageable(pageable);
     }
 
-    @GetMapping("/{id}")
-    public Bus getBus(@PathVariable Long id){
-        return service.getBus(id);
-    }
-
     @GetMapping("/permits")
     public List<Permits> getExpiredPermits(
-            @RequestParam(defaultValue = "allPermits") String permitType,
-            @RequestParam(required = false) String regNumber
-
+            @RequestParam boolean expired,
+            @RequestParam boolean expiring,
+            @RequestParam boolean valid,
+            @RequestParam(required = false) String regNumber,
+            @RequestParam(defaultValue = "") String depot
     ){
-        List<Permits> permits = service.generatePermits().get(permitType);
+        List<Permits> permits = new ArrayList<>();
+        HashMap<PermitStatus, List<Permits>> allPermits = service.generatePermits();
 
-        if (regNumber != null && !regNumber.isEmpty() && permits != null) {
-            permits = permits.stream().filter(permit -> permit.regNumber().equalsIgnoreCase(regNumber)).toList();
+        if(expired){
+            permits.addAll(allPermits.get(PermitStatus.Expired));
         }
-
+        if(expiring){
+            permits.addAll(allPermits.get(PermitStatus.AlmostExpired));
+        }
+        if(valid){
+            permits.addAll(allPermits.get(PermitStatus.Valid));
+        }
+        if(!depot.isEmpty()){
+            return permits.stream().filter(permit->permit.depot().equalsIgnoreCase(depot)).toList();
+        }
+        if(regNumber != null){
+            return permits.stream().filter(permit->permit.regNumber().equalsIgnoreCase(regNumber)).toList();
+        }
         return permits;
     }
 
@@ -93,5 +97,19 @@ public class BusController {
     @PostMapping("/")
     public Bus changeDepot(@PathVariable Long id, @RequestParam String depot){
         return service.changeDepot(id,depot);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteBus(@RequestParam String regNumber){
+        if(service.deleteBusByRegNumber(regNumber)){
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/all")
+    public void deleteAll(){
+        service.deleteAll();
     }
 }

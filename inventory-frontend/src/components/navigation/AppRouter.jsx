@@ -8,11 +8,23 @@ import { WithdrawalsPage } from '../inventory/withdrawal/WithdrawalsPage'
 import { ReportsPage } from '../inventory/report/ReportsPage'
 import { Permits } from '../permits/Permits'
 import { PermitsNav } from '../permits/PermitsNav'
+import { DriversPage } from '../drivers/DriversPage'
+import { DriversDocs } from '../drivers/DriversDocs'
+import { Drivers } from '../drivers/Drivers'
+import {Success} from '../utilities/Success';
+import {Error} from '../utilities/Error'
+import { useGlobalContext } from '../utilities/GlobalContext'
+import { PermitsDocs } from '../permits/PermitsDocs'
+
 const Layout=()=>{
+  const {errorModal, successModal, clarityModal} = useGlobalContext()
   return (
   <div className='flex'>
           <MySideBar />
-          <div className='w-full'>
+          <div className='unside-bar'>
+            { successModal && <Success /> }
+            { errorModal && <Error /> }
+            { clarityModal && <Clarity /> }
             <Outlet />
           </div>
     </div>
@@ -54,7 +66,21 @@ const router=createBrowserRouter([
             element: <Permits />
           },
           {
-
+            path: "/permits/documents",
+            element: <PermitsDocs />
+          }
+        ]
+      },
+      {
+        path: "/drivers",
+        element: <DriversPage />,
+        children: [
+          {
+            path: "/drivers",
+            element: <Drivers />
+          },{
+            path: "/drivers/documents",
+            element: <DriversDocs />
           }
         ]
       }

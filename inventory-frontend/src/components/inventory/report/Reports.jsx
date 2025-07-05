@@ -2,13 +2,12 @@ import React, { useState } from 'react'
 import moment from 'moment'
 import { useQuery } from '@tanstack/react-query'
 import { ReportItem } from './ReportItem'
-import { FetchSource } from '../../utilities/FetchSource'
+import { FetchSource, getFetch } from '../../utilities/FetchSource'
 
 export const Reports = () => {
   const url=FetchSource().source;
   const {data: reports,isLoading}=useQuery({
-        queryFn:()=>(fetch(`${url}/reports`)
-        .then(res=>res.json())),
+        queryFn:()=>getFetch("reports"),
         queryKey:["reports"]
     })
   
@@ -21,7 +20,7 @@ export const Reports = () => {
 
     const downloadReport = async (report) => {
     try {
-        const response = await fetch(`${url}/reports/${report.id}/download`, {
+        const response = await fetch(`${url}reports/${report.id}/download`, {
             method: 'GET',
             responseType: 'blob' // Ensure response type is Blob
         });

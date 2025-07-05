@@ -1,6 +1,6 @@
 import React,{ useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FetchSource } from '../../utilities/FetchSource';
+import { deleteFetch, FetchSource, getFetch } from '../../utilities/FetchSource';
 import { useSearchParams } from 'react-router-dom';
 
 export const Items = () => {
@@ -12,7 +12,7 @@ export const Items = () => {
 
   const url =FetchSource().source
   const { data: rawItems, isLoading} = useQuery({
-    queryFn: () => fetch(`${url}/items`).then(res => res.json()),
+    queryFn: () => getFetch("items"),
     queryKey: ["rawItems"],
   });
 
@@ -33,13 +33,7 @@ export const Items = () => {
   // Mutation for deleting an item
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      return fetch(`${url}/items/${id}`, {
-        method: 'DELETE',
-      }).then(res => {
-        if (!res.ok) {
-          throw new Error('Failed to delete item');
-        }
-      });
+      return deleteFetch("items");
     },
     onSuccess: () => {
       // Invalidate and refetch items after deletion

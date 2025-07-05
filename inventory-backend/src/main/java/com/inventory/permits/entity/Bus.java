@@ -1,7 +1,7 @@
 package com.inventory.permits.entity;
 
 
-import com.inventory.entity.BaseEntity;
+import com.inventory.inventory.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.*;
@@ -19,7 +19,7 @@ public class Bus extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String regNumber;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String depot;
 
     private LocalDate passengerInsurance;

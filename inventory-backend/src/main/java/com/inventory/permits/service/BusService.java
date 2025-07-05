@@ -1,11 +1,11 @@
 package com.inventory.permits.service;
 
 import com.inventory.permits.entity.Bus;
-import com.inventory.permits.entity.Permits;
+import com.inventory.permits.service.dto.Permits;
 import com.inventory.permits.repo.BusRepo;
 import com.inventory.permits.service.dto.BusCreateDto;
 import com.inventory.permits.service.dto.BusResponseDto;
-import com.inventory.permits.service.dto.PermitStatus;
+import com.inventory.utils.PermitStatus;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -29,35 +29,21 @@ public class BusService {
         return repo.findAll();
     }
 
-    public List<BusResponseDto> getBusesWithExpired() {
-        return getBuses().stream().map(bus-> {
-            try {
-                return busToResponse(bus);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }).toList();
+    public List<BusResponseDto> getBusesResponse() {
+        return getBuses().stream().map(this::busToResponse).toList();
     }
 
     public Page<BusResponseDto> getBusesPageable(Pageable pageable){
         Page<Bus> busPage = repo.findAll(pageable);
-
-        try{
-            return busPage.map(bus -> {
-                try {
-                    return busToResponse(bus);
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        }
-        catch (Exception ex){
-            ex.printStackTrace();
-        }
-        return null;
+        return busPage.map(this::busToResponse);
     }
 
-    public BusResponseDto busToResponse(Bus bus) throws IllegalAccessException{
+    /**
+     * Used get method on an optional
+     * @param bus
+     * @return
+     */
+    public BusResponseDto busToResponse(Bus bus){
         PermitStatus busStatus = getBusStatus(bus);
 
         return new BusResponseDto(
@@ -73,6 +59,11 @@ public class BusService {
         );
     }
 
+    /**
+     * ohhh something terrible happened here
+     * @param bus
+     * @return optional of permit status
+     */
     public PermitStatus getBusStatus(Bus bus) {
         return Arrays.stream(bus.getClass().getDeclaredFields())
                 .filter(field -> field.getType().equals(LocalDate.class)) // 1. Find LocalDate fields
@@ -82,8 +73,9 @@ public class BusService {
                         LocalDate date = (LocalDate) field.get(bus);
                         return date != null ? checkDateStatus(date) : PermitStatus.Valid; // 3. Default to Valid if null
                     } catch (IllegalAccessException e) {
-                        throw new RuntimeException("Failed to read field: " + field.getName(), e);
+                        e.printStackTrace();
                     }
+                    return null;
                 })
                 .max(Comparator.comparing(Enum::ordinal)) // 4. Find the WORST status (highest ordinal)
                 .orElse(PermitStatus.Valid); // 5. Default if no dates found
@@ -101,36 +93,24 @@ public class BusService {
     }
 
     /**
-     *
+     * this is an abomination
      * @param id
-     * @return bus permits of bus with id
+     * @return
      */
     public Bus getBus(Long id){
         return repo.findById(id).orElseThrow(()->new NoSuchElementException("Vehicle Not Found"));
     }
 
-    public BusResponseDto getBusWithExpired(Long id) throws IllegalAccessException {
-        return busToResponse(getBus(id));
+    public Optional<BusResponseDto> getBusById(Long id){
+        return repo.findById(id).map(this::busToResponse);
     }
 
-    public BusResponseDto getBusByRegNumberWithExpired(String regNumber) throws IllegalAccessException {
-        return busToResponse(getBusByRegNumber(regNumber.toUpperCase()));
+    public Optional<Bus> getBusByRegNumber(String regNumber){
+        return repo.findByRegNumber(regNumber);
     }
-
-    /**
-     *
-     * @param regNumber
-     * @return bus permits of bus with reg number...
-     */
-    public Bus getBusByRegNumber(String regNumber){
-        return repo.findByRegNumber(regNumber).orElseThrow(()->new NoSuchElementException("Vehicle Not Found"));
+    public Optional<BusResponseDto> getBusResponseByRegNumber(String regNumber){
+        return getBusByRegNumber(regNumber).map(this::busToResponse);
     }
-
-    /**
-     * adds bus permits to the database
-     * @param dto
-     * @return added bus, didn't implement mappers so it does the dto to bus operation...
-     */
     public Bus addBus(BusCreateDto dto){
         Bus bus = Bus.builder()
                 .regNumber(dto.regNumber().toUpperCase())
@@ -149,12 +129,12 @@ public class BusService {
      * generate 3 groups of permits, expired, almost expired and then all.
      * @return hashmap containing the different permits
      */
-    public HashMap<String,List<Permits>> generatePermits(){
+    public HashMap<PermitStatus,List<Permits>> generatePermits(){
         List<Permits> expiredPermits = new ArrayList<>();
         List<Permits> expiringWithinOneMonthPermits = new ArrayList<>();
-        List<Permits> allPermits = new ArrayList<>();
+        List<Permits> validPermits = new ArrayList<>();
 
-        HashMap<String,List<Permits>> permitsMap = new HashMap<>();
+        HashMap<PermitStatus,List<Permits>> permitsMap = new HashMap<>();
 
         List<Bus> buses = repo.findAll();
 
@@ -164,45 +144,45 @@ public class BusService {
                     .peek(f -> f.setAccessible(true))
                     .toList();
 
-            System.out.println(fields);
-
             fields.forEach(field -> {
                try {
                    LocalDate expirationDate = (LocalDate) field.get(bus);
 
                    Permits permits = Permits.builder()
-                           .permitType(StringUtils.capitalize(field.getName()))
+                           .type(StringUtils.capitalize(field.getName()))
                            .expirationDate(expirationDate)
                            .regNumber(bus.getRegNumber())
+                           .depot(bus.getDepot())
                            .build();
 
                    if(expirationDate.isBefore(LocalDate.now())) expiredPermits.add(permits);
 
                    else if (expirationDate.isBefore(LocalDate.now().plusMonths(1))) expiringWithinOneMonthPermits.add(permits);
 
-                   allPermits.add(permits);
+                   else validPermits.add(permits);
 
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
             });
         });
-        permitsMap.put("expiredPermits",expiredPermits);
-        permitsMap.put("expiringPermits",expiringWithinOneMonthPermits);
-        permitsMap.put("allPermits",allPermits);
+        permitsMap.put(PermitStatus.Expired,expiredPermits);
+        permitsMap.put(PermitStatus.AlmostExpired,expiringWithinOneMonthPermits);
+        permitsMap.put(PermitStatus.Valid,validPermits);
         return permitsMap;
     }
 
     /**
-     * changes the date of a permit
+     * changes the date of a permit. something terrible also happened...used get method on an
+     * Optional
      * @param permit
      * @throws IllegalAccessException
      */
     public void changePermitDate(Permits permit) throws IllegalAccessException {
-        Bus bus = getBusByRegNumber(permit.regNumber());
+        Bus bus = getBusByRegNumber(permit.regNumber()).get();
         Field[] fields = bus.getClass().getDeclaredFields();
         for (Field field : fields) {
-            if(field.getName().equalsIgnoreCase(permit.permitType())){
+            if(field.getName().equalsIgnoreCase(permit.type())){
                 field.setAccessible(true);
                 field.set(bus,permit.expirationDate());
                 field.setAccessible(false);
@@ -223,5 +203,19 @@ public class BusService {
         bus.setDepot(depot);
 
         return repo.save(bus);
+    }
+
+    public boolean deleteBusByRegNumber(String regNumber){
+        try{
+            Bus bus = repo.findByRegNumber(regNumber).get();
+            repo.delete(bus);
+            return true;
+        } catch (NoSuchElementException e){
+            return false;
+        }
+    }
+
+    public void deleteAll(){
+        repo.deleteAll();
     }
 }

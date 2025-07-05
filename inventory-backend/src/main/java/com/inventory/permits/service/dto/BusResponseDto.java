@@ -1,5 +1,7 @@
 package com.inventory.permits.service.dto;
 
+import com.inventory.utils.PermitStatus;
+
 import java.time.LocalDate;
 
 public record BusResponseDto(
