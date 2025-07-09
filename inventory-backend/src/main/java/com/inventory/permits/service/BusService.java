@@ -7,13 +7,19 @@ import com.inventory.permits.service.dto.BusCreateDto;
 import com.inventory.permits.service.dto.BusResponseDto;
 import com.inventory.utils.PermitStatus;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -217,5 +223,181 @@ public class BusService {
 
     public void deleteAll(){
         repo.deleteAll();
+    }
+
+    public ByteArrayOutputStream exportPermitsToExcel(List<Permits> permits) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+
+            // Create a sheet in the workbook
+            Sheet sheet = workbook.createSheet("Bus Permits");
+
+            // Create header style with bold font
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            // Create date style
+            CellStyle dateStyle = workbook.createCellStyle();
+            CreationHelper createHelper = workbook.getCreationHelper();
+            dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-mmm-yyyy"));
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {
+                    "Registration #",
+                    "Depot",
+                    "Permit Type",
+                    "Expiration Date",
+                    "Status",
+                    "Days Remaining"
+            };
+
+            // Write headers
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Write permit data
+            int rowNum = 1;
+            for (Permits permit : permits) {
+                Row row = sheet.createRow(rowNum++);
+
+                // Registration Number
+                row.createCell(0).setCellValue(permit.regNumber());
+
+                // Depot
+                row.createCell(1).setCellValue(permit.depot());
+
+                // Permit Type
+                row.createCell(2).setCellValue(permit.type());
+
+                // Expiration Date (with formatting)
+                Cell dateCell = row.createCell(3);
+                if (permit.expirationDate() != null) {
+                    dateCell.setCellValue(Date.from(permit.expirationDate()
+                            .atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                    dateCell.setCellStyle(dateStyle);
+                }
+
+                // Status
+                String status;
+                long daysRemaining = ChronoUnit.DAYS.between(
+                        LocalDate.now(),
+                        permit.expirationDate()
+                );
+
+                if (daysRemaining < 0) {
+                    status = "EXPIRED";
+                } else if (daysRemaining <= 30) {
+                    status = "EXPIRING SOON";
+                } else {
+                    status = "VALID";
+                }
+
+                row.createCell(4).setCellValue(status);
+
+                // Days Remaining (conditional coloring)
+                Cell daysCell = row.createCell(5);
+                daysCell.setCellValue(daysRemaining);
+
+                CellStyle daysStyle = workbook.createCellStyle();
+                if (daysRemaining < 0) {
+                    daysStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
+                    daysStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                } else if (daysRemaining <= 30) {
+                    daysStyle.setFillForegroundColor(IndexedColors.ORANGE.getIndex());
+                    daysStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                } else {
+                    daysStyle.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+                    daysStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                }
+                daysCell.setCellStyle(daysStyle);
+            }
+
+            // Auto-size all columns
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // Freeze header row
+            sheet.createFreezePane(0, 1);
+
+            workbook.write(outputStream);
+            return outputStream;
+        }
+    }
+    public ByteArrayOutputStream exportBusesToExcel(List<BusResponseDto> buses) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("Bus Permits");
+
+            // Create header row with style
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            String[] headers = {
+                    "Reg Number", "Depot", "Passenger Insurance",
+                    "Vehicle License", "Vehicle Insurance",
+                    "Certificate Of Fitness", "Route Authority"
+            };
+
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Date format
+            CellStyle dateStyle = workbook.createCellStyle();
+            CreationHelper createHelper = workbook.getCreationHelper();
+            dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-mmm-yyyy"));
+
+            // Fill data
+            int rowNum = 1;
+            for (BusResponseDto bus : buses) {
+                Row row = sheet.createRow(rowNum++);
+
+                row.createCell(0).setCellValue(bus.regNumber());
+                row.createCell(1).setCellValue(bus.depot());
+
+                // Add dates with formatting
+                Cell passengerInsuranceCell = row.createCell(2);
+                passengerInsuranceCell.setCellValue(bus.passengerInsurance());
+                passengerInsuranceCell.setCellStyle(dateStyle);
+
+                Cell vehicleLicenseCell = row.createCell(3);
+                vehicleLicenseCell.setCellValue(bus.vehicleLicence());
+                vehicleLicenseCell.setCellStyle(dateStyle);
+
+                Cell vehicleInsuranceCell = row.createCell(4);
+                vehicleInsuranceCell.setCellValue(bus.vehicleInsurance());
+                vehicleInsuranceCell.setCellStyle(dateStyle);
+
+                Cell fitnessCell = row.createCell(5);
+                fitnessCell.setCellValue(bus.certificateOfFitness());
+                fitnessCell.setCellStyle(dateStyle);
+
+                Cell routeAuthorityCell = row.createCell(6);
+                routeAuthorityCell.setCellValue(bus.routeAuthority());
+                routeAuthorityCell.setCellStyle(dateStyle);
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return out;
+        }
     }
 }

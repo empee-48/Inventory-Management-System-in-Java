@@ -99,8 +99,8 @@ export const ShowDriver = ({ show, setShowDriver, driverId }) => {
             <div className={classNames(displayStatus(driver).color,'mx-auto text-5xl font-bold h-20 w-20 rounded-full text-gray-50 flex justify-center place-items-center')}>{displayStatus(driver).sign}</div>
             <p className={classNames(displayStatus(driver).textColor,'font-medium text-center text-sm')}>{displayStatus(driver).text}</p>
             <div className='py-5'>
-                <p className='text-2xl capitalize text-gray-800 border p-1 font-medium text-center mb-2'>{driver.firstName} {driver.lastName}</p>
-                <p className='text-2xl capitalize text-gray-800 border p-1 font-medium text-center'>{driverId} {driver.depot}</p>
+                <p className='text-2xl capitalize text-gray-800 border p-1 font-medium text-center mb-2 border-gray-500'>{driver.firstName} {driver.lastName}</p>
+                <p className='text-2xl capitalize text-gray-800 border p-1 font-medium text-center border-gray-500'>{driverId} {driver.depot}</p>
                 <p className='modal-p'>Medical <span>{moment(driver.medical).format("DD MMMM YYYY")}</span></p>
                 <p className='modal-p'>Retest <span>{moment(driver.retest).format("DD MMMM YYYY")}</span></p>
                 <p className='modal-p'>Defensive <span>{moment(driver.defensive).format("DD MMMM YYYY")}</span></p>

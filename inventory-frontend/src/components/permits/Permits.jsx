@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Permits.css';
 import { useQuery } from '@tanstack/react-query';
-import { getFetch } from '../utilities/FetchSource';
+import { FetchSource, getFetch } from '../utilities/FetchSource';
 import { Loader } from '../utilities/Loader';
 import { equalsIgnoreCase } from '../utilities/EqualsIgnoreCase';
 import moment from 'moment';
@@ -21,6 +21,8 @@ export const Permits = () => {
   const [filteredBuses, setFilteredBuses] = useState([]);
   const [permitStatusFilter, setPermitStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [selectedDepot, setSelectedDepot] = useState("All");
   const itemsPerPage = 15;
 
   const { setErrorModal, setModalMessage } = useGlobalContext();
@@ -64,6 +66,35 @@ export const Permits = () => {
     setShowBus(true);
   };
 
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      const params = new URLSearchParams();
+      
+      if (selectedDepot !== "All") params.append('depot', selectedDepot);
+      params.append('download', 'true');
+      
+      const response = await fetch(`${FetchSource().source}buses?${params.toString()}`);
+      
+      if (!response.ok) throw new Error('Failed to download');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `bus_permits_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error('Download error:', error);
+      setModalMessage('Failed to download Excel file');
+      setErrorModal(true);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleDepotParam = depot => {
     let filtered = rawBuses;
     
@@ -100,7 +131,18 @@ export const Permits = () => {
       <div className='mx-5'>
         <div className='w-full'>
           <div className='bg-gradient-to-tl mb-2 rounded p-1 from-purple-600 to-purple-900 px-10 border-2 border-purple-600'>
-            <h1 className='text-3xl text-gray-200 border-b mb-2 border-gray-500'>Filters</h1>
+            <div className='flex justify-between items-center border-gray-300 border-b mb-2 p-1'>
+              <h1 className='text-3xl text-gray-200'>Filters</h1>
+              <button 
+                  onClick={handleDownload}
+                  disabled={isDownloading || filteredBuses.length === 0}
+                  className={`bg-gradient-to-br from-green-600 to-green-800 text-white px-4 py-2 rounded-md shadow hover:from-green-700 hover:to-green-900 transition-colors duration-300 ${
+                    isDownloading || filteredBuses.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isDownloading ? 'Downloading...' : 'Download Excel'}
+                </button>
+            </div>
             <div className='flex mb-2 justify-between'>
               <Select
                 className='w-72 mb-1 capitalize'

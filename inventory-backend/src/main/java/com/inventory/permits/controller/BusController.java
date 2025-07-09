@@ -11,9 +11,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,18 +33,36 @@ public class BusController {
     public ResponseEntity<?> getAll(
             @RequestParam(defaultValue = "") String depot,
             @RequestParam(defaultValue = "") String regNumber,
-            @RequestParam(required = false) Long id
+            @RequestParam(required = false) Long id,
+            @RequestParam(defaultValue = "false") boolean download
     ){
+        List<BusResponseDto> buses = service.getBusesResponse();
+
+        if(!depot.isEmpty()) {
+            buses = buses.stream().filter(bus -> bus.depot().equalsIgnoreCase(depot)).toList();
+        };
+        if(download) {
+            try {
+                ByteArrayOutputStream stream = service.exportBusesToExcel(buses);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+                headers.setContentDispositionFormData(
+                        "attachment", "buses" + LocalDate.now() + ".xlsx");
+
+                return ResponseEntity.ok().headers(headers).body(stream.toByteArray());
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body("Error generating Excel file: " + e.getMessage());
+            }
+        }
         if(id != null){
             return ResponseEntity.of(service.getBusById(id));
         }
         if(!regNumber.isEmpty()) {
             return ResponseEntity.of(service.getBusResponseByRegNumber(regNumber));
         }
-        if(!depot.isEmpty()) {
-            service.getBusesResponse().stream().filter(bus -> bus.depot().equalsIgnoreCase(depot)).toList();
-        };
-        return ResponseEntity.ok(service.getBusesResponse());
+
+        return ResponseEntity.ok(buses);
     }
 
     @GetMapping("/page")
@@ -51,12 +73,13 @@ public class BusController {
     }
 
     @GetMapping("/permits")
-    public List<Permits> getExpiredPermits(
+    public ResponseEntity<?> getExpiredPermits(
             @RequestParam boolean expired,
             @RequestParam boolean expiring,
             @RequestParam boolean valid,
             @RequestParam(required = false) String regNumber,
-            @RequestParam(defaultValue = "") String depot
+            @RequestParam(defaultValue = "") String depot,
+            @RequestParam(defaultValue = "false") boolean download
     ){
         List<Permits> permits = new ArrayList<>();
         HashMap<PermitStatus, List<Permits>> allPermits = service.generatePermits();
@@ -71,12 +94,26 @@ public class BusController {
             permits.addAll(allPermits.get(PermitStatus.Valid));
         }
         if(!depot.isEmpty()){
-            return permits.stream().filter(permit->permit.depot().equalsIgnoreCase(depot)).toList();
+            permits = permits.stream().filter(permit->permit.depot().equalsIgnoreCase(depot)).toList();
         }
         if(regNumber != null){
-            return permits.stream().filter(permit->permit.regNumber().equalsIgnoreCase(regNumber)).toList();
+            permits = permits.stream().filter(permit->permit.regNumber().equalsIgnoreCase(regNumber)).toList();
         }
-        return permits;
+        if(download) {
+            try {
+                ByteArrayOutputStream stream = service.exportPermitsToExcel(permits);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+                headers.setContentDispositionFormData(
+                        "attachment", "bus_permits_" + LocalDate.now() + ".xlsx");
+
+                return ResponseEntity.ok().headers(headers).body(stream.toByteArray());
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body("Error generating Excel file: " + e.getMessage());
+            }
+        }
+        return ResponseEntity.ok(permits);
     }
 
     @PostMapping("/permits/update")

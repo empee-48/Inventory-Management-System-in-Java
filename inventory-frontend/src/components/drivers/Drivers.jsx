@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getFetch } from '../utilities/FetchSource';
+import { FetchSource, getFetch } from '../utilities/FetchSource';
 import { Loader } from "../utilities/Loader";
 import { ShowDriver } from './ShowDriver';
 import { LuChevronsLeft } from 'react-icons/lu';
@@ -10,7 +10,6 @@ import moment from 'moment';
 import { useGlobalContext } from '../utilities/GlobalContext';
 import Select from 'react-select';
 import "../permits/Permits.css";
-import { equalsIgnoreCase } from '../utilities/EqualsIgnoreCase';
 
 export const Drivers = () => {
   const [showDriver, setShowDriver] = useState(false);
@@ -18,19 +17,18 @@ export const Drivers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [depotOptions, setDepotOptions] = useState([]);
   const [driverOptions, setDriverOptions] = useState([]);
-  const [filteredDrivers, setFilteredDrivers] = useState([]);
-  const [selectedDepot, setSelectedDepot] = useState("All");
-  const [selectedDriver, setSelectedDriver] = useState("All");
+  const [selectedDepot, setSelectedDepot] = useState("");
+  const [selectedDriver, setSelectedDriver] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
   const itemsPerPage = 15;
 
   const { setErrorModal, setModalMessage } = useGlobalContext();
 
   const fetchDrivers = async () => {
-    const tempListDepot = [{ value: "All", label: "All Depots" }];
-    const tempListDrivers = [{ value: "All", label: "All Drivers" }];
+    const tempListDepot = [{ value: "", label: "All Depots" }];
+    const tempListDrivers = [{ value: "", label: "All Drivers" }];
     const data = await getFetch("drivers");
 
-    // Extract unique depots and create driver options
     data.forEach(driver => {
       if (!tempListDepot.some(option => option.value === driver.depot)) {
         tempListDepot.push({ value: driver.depot, label: driver.depot });
@@ -44,14 +42,56 @@ export const Drivers = () => {
 
     setDepotOptions(tempListDepot);
     setDriverOptions(tempListDrivers);
-    setFilteredDrivers(data);
     return data;
   };
 
-  const { data: drivers, isLoading, error } = useQuery({
+  const fetchFilteredDrivers = async () => {
+    const params = new URLSearchParams();
+    if (selectedDepot) params.append('depot', selectedDepot);
+    if (selectedDriver) params.append('driverId', selectedDriver);
+    
+    return await getFetch(`drivers?${params.toString()}`);
+  };
+
+  const { data: drivers, isLoading } = useQuery({
     queryFn: fetchDrivers,
     queryKey: ["drivers"]
   });
+
+  const { data: filteredDrivers = [], refetch } = useQuery({
+    queryFn: fetchFilteredDrivers,
+    queryKey: ["filteredDrivers", selectedDepot, selectedDriver],
+    enabled: !!drivers
+  });
+
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      const params = new URLSearchParams();
+      if (selectedDepot) params.append('depot', selectedDepot);
+      if (selectedDriver) params.append('driverId', selectedDriver);
+      params.append('download', 'true');
+      
+      const response = await fetch(`${FetchSource().source}drivers?${params.toString()}`);
+      
+      if (!response.ok) throw new Error('Failed to download');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `drivers_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error('Download error:', error);
+      setModalMessage('Failed to download Excel file');
+      setErrorModal(true);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   // Pagination logic
   const totalPages = Math.ceil(filteredDrivers.length / itemsPerPage);
@@ -59,34 +99,19 @@ export const Drivers = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredDrivers.slice(indexOfFirstItem, indexOfLastItem);
 
-  const handleShowDriver = (driverId) => {
+  const handleShowDriver = (id) => {
     setShowDriver(true);
-    setDriverId(driverId);
+    setDriverId(id);
   };
 
   const handleDepotFilter = (depot) => {
     setSelectedDepot(depot);
-    applyFilters(depot, selectedDriver);
+    setCurrentPage(1);
   };
 
   const handleDriverFilter = (driverId) => {
     setSelectedDriver(driverId);
-    applyFilters(selectedDepot, driverId);
-  };
-
-  const applyFilters = (depot, driverId) => {
-    let filtered = drivers || [];
-    
-    if (depot !== "All") {
-      filtered = filtered.filter(driver => equalsIgnoreCase(driver.depot, depot));
-    }
-    
-    if (driverId !== "All") {
-      filtered = filtered.filter(driver => driver.id === driverId);
-    }
-    
-    setFilteredDrivers(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
   const paginate = (pageNumber) => {
@@ -99,17 +124,22 @@ export const Drivers = () => {
     return <Loader />;
   }
 
-  if (error) {
-    setErrorModal(true);
-    setModalMessage(error.message);
-    return <div></div>;
-  }
-
   return (
     <div>
       <div className='mx-auto w-full px-10'>
         <div className='bg-gradient-to-tl mb-2 rounded p-1 from-purple-600 to-purple-800 px-10 border-2 border-purple-600'>
-          <h1 className='text-3xl text-gray-200 border-b mb-2 border-gray-500'>Filters</h1>
+          <div className='flex justify-between items-center border-gray-300 border-b mb-2 p-1'>
+            <h1 className='text-3xl text-gray-200'>Filters</h1>
+            <button 
+              onClick={handleDownload}
+              disabled={isDownloading || filteredDrivers.length === 0}
+              className={`bg-gradient-to-br from-green-600 to-green-800 text-white px-4 py-2 rounded-md shadow hover:from-green-700 hover:to-green-900 transition-colors duration-300 ${
+                isDownloading || filteredDrivers.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {isDownloading ? 'Downloading...' : 'Download Excel'}
+            </button>
+          </div>
           <div className='flex gap-10 mb-2 justify-between'>
             <Select
               className='w-72 mb-1 capitalize'

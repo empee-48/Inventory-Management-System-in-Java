@@ -101,7 +101,7 @@ export const ShowBus = ({ show, setShowBus, regNumber, refetch }) => {
             <div className={classNames(getStatus(bus).color,'mx-auto text-5xl font-bold h-20 w-20 rounded-full text-gray-50 flex justify-center place-items-center')}>{getStatus(bus).sign}</div>
             <p className={classNames(getStatus(bus).textColor,'font-medium text-center text-sm')}>{getStatus(bus).text}</p>
             <div className='py-5'>
-                <p className='text-2xl capitalize text-gray-800 border p-1 font-medium text-center'>{regNumber} {bus.depot}</p>
+                <p className='text-2xl capitalize text-gray-800 border p-1 font-medium text-center border-gray-500'>{regNumber} {bus.depot}</p>
                 <p className='modal-p'>Passenger Insurance <span>{moment(bus.passengerInsurance).format("DD MMMM YYYY")}</span></p>
                 <p className='modal-p'>Vehicle License <span>{moment(bus.vehicleLicence).format("DD MMMM YYYY")}</span></p>
                 <p className='modal-p'>Vehicle Insurance <span>{moment(bus.vehicleInsurance).format("DD MMMM YYYY")}</span></p>
