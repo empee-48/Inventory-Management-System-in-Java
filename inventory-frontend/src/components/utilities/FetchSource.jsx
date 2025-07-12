@@ -1,7 +1,7 @@
 
 export const FetchSource = () => {
   // return {source:"http://localhost:8081/inventory/api/", permitSource: "http://localhost:8081/permits/api/buses"}
-  return {source:"http://192.168.2.249:8081/inventory/api/", permitSource: "http://192.168.2.249:8081/permits/api/buses"}
+  return {source:"http://192.168.137.88:8081/inventory/api/", permitSource: "http://192.168.137.88:8081/permits/api/buses"}
 }
 
 export const getFetch = (url) => fetch(FetchSource().source+url).then(res=>{

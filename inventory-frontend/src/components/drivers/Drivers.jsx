@@ -97,7 +97,7 @@ export const Drivers = () => {
   const totalPages = Math.ceil(filteredDrivers.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredDrivers.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredDrivers?.slice(indexOfFirstItem, indexOfLastItem);
 
   const handleShowDriver = (id) => {
     setShowDriver(true);
